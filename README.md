@@ -10,3 +10,6 @@ Server for GrcpAndroid project
  - run the server using command:
    `./build/install/GrpcServer/bin/hello-world-server`
 
+## Where is the android client:
+
+https://github.com/Aetherna/GrpcAndroid
