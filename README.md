@@ -8,7 +8,7 @@ Server for GrcpAndroid project
    `./gradlew installDist`
    this will generate your server in /build/install/GrpcServer/bin/ directory
  - run the server using command:
-   `./build/install/GrpcServer/bin/hello-world-server`
+   `./build/install/GrpcServer/bin/grpc-server`
 
 ## Where is the android client:
 
