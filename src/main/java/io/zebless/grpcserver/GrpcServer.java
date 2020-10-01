@@ -22,6 +22,7 @@ import io.grpc.examples.helloworld.GreeterGrpc;
 import io.grpc.examples.helloworld.HelloReply;
 import io.grpc.examples.helloworld.HelloRequest;
 import io.grpc.stub.StreamObserver;
+import io.zebless.grpcserver.trip.TripService;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -30,16 +31,19 @@ import java.util.logging.Logger;
 /**
  * Server that manages startup/shutdown of a {@code Greeter} server.
  */
-public class HelloWorldServer {
-  private static final Logger logger = Logger.getLogger(HelloWorldServer.class.getName());
+public class GrpcServer {
+  private static final Logger logger = Logger.getLogger(GrpcServer.class.getName());
 
   private Server server;
+
+  private TripService tripService = new TripService();
 
   private void start() throws IOException {
     /* The port on which the server should run */
     int port = 50051;
     server = ServerBuilder.forPort(port)
         .addService(new GreeterImpl())
+        .addService(tripService)
         .build()
         .start();
     logger.info("Server started, listening on " + port);
@@ -49,7 +53,7 @@ public class HelloWorldServer {
         // Use stderr here since the logger may have been reset by its JVM shutdown hook.
         System.err.println("*** shutting down gRPC server since JVM is shutting down");
         try {
-          HelloWorldServer.this.stop();
+          GrpcServer.this.stop();
         } catch (InterruptedException e) {
           e.printStackTrace(System.err);
         }
@@ -61,6 +65,7 @@ public class HelloWorldServer {
   private void stop() throws InterruptedException {
     if (server != null) {
       server.shutdown().awaitTermination(30, TimeUnit.SECONDS);
+      tripService.onShutDown();
     }
   }
 
@@ -77,7 +82,7 @@ public class HelloWorldServer {
    * Main launches the server from the command line.
    */
   public static void main(String[] args) throws IOException, InterruptedException {
-    final HelloWorldServer server = new HelloWorldServer();
+    final GrpcServer server = new GrpcServer();
     server.start();
     server.blockUntilShutdown();
   }
@@ -91,4 +96,5 @@ public class HelloWorldServer {
       responseObserver.onCompleted();
     }
   }
+
 }

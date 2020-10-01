@@ -11,7 +11,7 @@ repositories {
     mavenCentral()
 }
 
-def grpcVersion = '1.32.1' // CURRENT_GRPC_VERSION
+def grpcVersion = '1.32.1' 
 def protobufVersion = '3.12.0'
 def protocVersion = protobufVersion
 
@@ -40,10 +40,9 @@ dependencies {
     implementation "io.grpc:grpc-stub:${grpcVersion}"
     compileOnly "org.apache.tomcat:annotations-api:6.0.53"
 
-    // examples/advanced need this for JsonFormat
-    implementation "com.google.protobuf:protobuf-java-util:${protobufVersion}"
+    compile 'io.reactivex.rxjava3:rxjava:3.0.4'
 
-    runtimeOnly "io.grpc:grpc-netty-shaded:${grpcVersion}"
+    runtimeOnly "io.grpc:grpc-netty-shaded:${grpcVersion}" //todo needed?
 
     testImplementation "io.grpc:grpc-testing:${grpcVersion}"
     testImplementation "junit:junit:4.12"
@@ -52,22 +51,15 @@ dependencies {
 
 startScripts.enabled = false
 
-task helloWorldServer(type: CreateStartScripts) {
-    mainClassName = 'io.zebless.grpcserver.HelloWorldServer'
-    applicationName = 'hello-world-server'
+task grpcServer(type: CreateStartScripts) {
+    mainClassName = 'io.zebless.grpcserver.GrpcServer'
+    applicationName = 'grpc-server'
     outputDir = new File(project.buildDir, 'tmp')
     classpath = startScripts.classpath
 }
 
-task helloWorldClient(type: CreateStartScripts) {
-    mainClassName = 'io.zebless.grpcserver.HelloWorldClient'
-    applicationName = 'hello-world-client'
-    outputDir = new File(project.buildDir, 'tmp')
-    classpath = startScripts.classpath
-}
 
 applicationDistribution.into('bin') {
-    from(helloWorldServer)
-    from(helloWorldClient)
+    from(grpcServer)
     fileMode = 0755
 }
