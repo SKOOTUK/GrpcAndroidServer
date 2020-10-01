@@ -18,4 +18,4 @@ https://github.com/Aetherna/GrpcAndroid
 ## Changelog
 
 - hello world server - basic request / response example
-- streaming coming soon :P
+- streaming ( very simple for now) in trip server
