@@ -1,5 +1,7 @@
 package io.zebless.grpcserver.trip;
 
+import io.grpc.Status;
+import io.grpc.StatusException;
 import io.grpc.stub.StreamObserver;
 import io.reactivex.rxjava3.annotations.NonNull;
 import io.reactivex.rxjava3.core.Observable;
@@ -32,17 +34,25 @@ public class TripService extends TripServiceGrpc.TripServiceImplBase {
     public void startTrip(StartTripRequest request, StreamObserver<TripUpdateReply> responseObserver) {
 
         logger.info("Start Trip");
-        compositeDisposable.add(
-                getTripUpdates(request.getId())
-                        .doOnNext(trip -> {
+
+        if (request.getId() > 3) {
+            responseObserver.onError(new StatusException(Status.fromCode(Status.Code.RESOURCE_EXHAUSTED)));
+            return;
+        }
+
+        compositeDisposable.add(getTripUpdates(request.getId())
+                .subscribe(
+                        trip -> {
                             logger.info("Posting trip update: " + trip.getMessage());
                             TripUpdateReply reply = TripUpdateReply.newBuilder().setTrip(trip).build();
                             responseObserver.onNext(reply);
-                        })
-                        .doOnError(responseObserver::onError)
-                        .doOnComplete(responseObserver::onCompleted)
-                        .subscribe()
-        );
+                        },
+                        throwable ->{
+                            responseObserver.onError(throwable);
+                            
+                        } ,
+                        () -> responseObserver.onCompleted()
+                ));
     }
 
     private Observable<Trip> getTripUpdates(Integer requestId) {
