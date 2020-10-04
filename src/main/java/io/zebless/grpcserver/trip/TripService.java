@@ -1,76 +1,45 @@
 package io.zebless.grpcserver.trip;
 
-import io.grpc.Status;
-import io.grpc.StatusException;
-import io.grpc.stub.StreamObserver;
-import io.reactivex.rxjava3.annotations.NonNull;
-import io.reactivex.rxjava3.core.Observable;
-import io.reactivex.rxjava3.core.Observer;
-import io.reactivex.rxjava3.disposables.CompositeDisposable;
-import io.reactivex.rxjava3.disposables.Disposable;
-import io.reactivex.rxjava3.functions.Action;
-import io.reactivex.rxjava3.functions.Consumer;
-import io.zelbess.tripupdates.StartTripRequest;
-import io.zelbess.tripupdates.Trip;
-import io.zelbess.tripupdates.TripServiceGrpc;
-import io.zelbess.tripupdates.TripUpdateReply;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
+import io.grpc.stub.StreamObserver;
+import io.reactivex.disposables.CompositeDisposable;
+import io.zebless.grpcserver.trip.uglymodel.TripModel;
+import io.zelbess.tripupdates.*;
+
 import java.util.logging.Logger;
 
 public class TripService extends TripServiceGrpc.TripServiceImplBase {
 
     private static final Logger logger = Logger.getLogger(TripService.class.getName());
-
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
+    private TripModel tripModel = new TripModel();
+
     public void onShutDown() {
+        tripModel.clear();
         compositeDisposable.clear();
     }
 
     @Override
-    public void startTrip(StartTripRequest request, StreamObserver<TripUpdateReply> responseObserver) {
-
-        logger.info("Start Trip");
-
-        if (request.getId() > 3) {
-            responseObserver.onError(new StatusException(Status.fromCode(Status.Code.RESOURCE_EXHAUSTED)));
-            return;
-        }
-
-        compositeDisposable.add(getTripUpdates(request.getId())
-                .subscribe(
-                        trip -> {
-                            logger.info("Posting trip update: " + trip.getMessage());
-                            TripUpdateReply reply = TripUpdateReply.newBuilder().setTrip(trip).build();
-                            responseObserver.onNext(reply);
-                        },
-                        throwable ->{
-                            responseObserver.onError(throwable);
-                            
-                        } ,
-                        () -> responseObserver.onCompleted()
-                ));
+    public void createTrip(CreateTripRequest request, StreamObserver<CreateTripReply> responseObserver) {
+        int newTripId = tripModel.createATrip();
+        responseObserver.onNext(CreateTripReply.newBuilder().setId(newTripId).build());
+        responseObserver.onCompleted();
     }
 
-    private Observable<Trip> getTripUpdates(Integer requestId) {
-        List<Integer> times = new ArrayList<>();
-        for (int i = 0; i < 15; i++) {
-            times.add(i);
-        }
-
-        return Observable.zip(
-                Observable.fromIterable(times),
-                Observable.interval(3, TimeUnit.SECONDS),
-                (integer, aLong) -> integer)
-                .map(integer ->
-                        Trip.newBuilder()
-                                .setId(requestId)
-                                .setMessage("Update no: " + integer)
-                                .build()
-                );
+    @Override
+    public void followTrip(FollowTripRequest request, StreamObserver<FollowTripReply> responseObserver) {
+        compositeDisposable.add(
+                tripModel.tripsHistory
+                        .filter(trip -> trip.getId() == request.getId())
+                        .subscribe(
+                                trip -> {
+                                    responseObserver.onNext(FollowTripReply.newBuilder().setTrip(trip).build());
+                                    if (trip.getMessage().equalsIgnoreCase("FINISHED")) responseObserver.onCompleted();
+                                },
+                                throwable -> {
+                                    logger.severe("Exception during follow trip:" + throwable.getMessage());
+                                })
+        );
     }
-
 }

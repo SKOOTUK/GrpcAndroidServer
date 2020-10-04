@@ -14,14 +14,20 @@ repositories {
 def grpcVersion = '1.32.1' 
 def protobufVersion = '3.12.0'
 def protocVersion = protobufVersion
+def reactiveGrpcVersion = "1.0.1"
 
 protobuf {
     protoc { artifact = "com.google.protobuf:protoc:${protocVersion}" }
     plugins {
         grpc { artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}" }
+        rxgrpc { artifact = "com.salesforce.servicelibs:rxgrpc:${reactiveGrpcVersion}" }
+        reactor { artifact = "com.salesforce.servicelibs:reactor-grpc:${reactiveGrpcVersion}" }
     }
     generateProtoTasks {
-        all()*.plugins { grpc {} }
+        all()*.plugins {
+            grpc {}
+            rxgrpc {}
+            reactor {}}
     }
 }
 
@@ -35,13 +41,17 @@ sourceSets {
     }
 }
 
+
 dependencies {
     implementation "io.grpc:grpc-protobuf:${grpcVersion}"
     implementation "io.grpc:grpc-stub:${grpcVersion}"
+
+    implementation "com.salesforce.servicelibs:reactive-grpc:${reactiveGrpcVersion}"
+    implementation "com.salesforce.servicelibs:rxgrpc-stub:${reactiveGrpcVersion}"
+    implementation "com.salesforce.servicelibs:reactor-grpc-stub:${reactiveGrpcVersion}"
+    implementation "io.reactivex.rxjava2:rxjava:2.2.10"
+
     compileOnly "org.apache.tomcat:annotations-api:6.0.53"
-
-    compile 'io.reactivex.rxjava3:rxjava:3.0.4'
-
     runtimeOnly "io.grpc:grpc-netty-shaded:${grpcVersion}" //todo needed?
 
     testImplementation "io.grpc:grpc-testing:${grpcVersion}"
