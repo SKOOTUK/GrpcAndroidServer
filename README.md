@@ -18,4 +18,5 @@ https://github.com/Aetherna/GrpcAndroid
 ## Changelog
 
 - hello world server - basic request / response example
-- streaming ( very simple for now) in trip server
+- server streaming - sending updates to a client every few seconds
+- client streaming - listening to client location updates
