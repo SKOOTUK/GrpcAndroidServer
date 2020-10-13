@@ -37,6 +37,17 @@ public class RxTripService extends RxTripServiceGrpc.TripServiceImplBase {
         );
     }
 
+    @Override
+    public Flowable<UpdateLocationReply> updateLocation(Flowable<UpdateLocationRequest> request) {
+        return request
+                .doOnNext(next -> {
+                    String message = next.getUserId() + " " + next.getLat() + "," + next.getLon();
+                    logger.info("Location update received: " + message);
+                })
+                .doOnError(throwable -> logger.severe("ERROR ERROR! " + throwable.getMessage()))
+                .map(updateLocationRequest -> UpdateLocationReply.newBuilder().setStatusCode(200).build());
+    }
+
     public void onShutDown() {
         tripModel.clear();
     }
