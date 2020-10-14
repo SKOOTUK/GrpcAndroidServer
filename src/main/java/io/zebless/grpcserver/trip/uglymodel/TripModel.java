@@ -3,8 +3,7 @@ package io.zebless.grpcserver.trip.uglymodel;
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.subjects.BehaviorSubject;
-import io.zebless.grpcserver.trip.TripService;
-import io.zelbess.tripupdates.Trip;
+import io.zelbess.tripupdates.TripNetworkModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,9 +12,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class TripModel {
-    private static final Logger logger = Logger.getLogger(TripService.class.getName());
+    private static final Logger logger = Logger.getLogger("TripModel");
 
-    public BehaviorSubject<Trip> tripsHistory = BehaviorSubject.create();
+    public BehaviorSubject<TripNetworkModel> tripsHistory = BehaviorSubject.create();
 
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
@@ -41,7 +40,7 @@ public class TripModel {
                 Observable.interval(3, TimeUnit.SECONDS),
                 (integer, aLong) -> integer)
                 .map(integer ->
-                        Trip.newBuilder()
+                        TripNetworkModel.newBuilder()
                                 .setId(requestId)
                                 .setMessage(getMessage(integer))
                                 .build()

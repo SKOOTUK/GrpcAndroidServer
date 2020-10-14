@@ -14,7 +14,10 @@ service TripService {
   rpc updateLocation(stream UpdateLocationRequest) returns (stream UpdateLocationReply) {}
 }
 
-message CreateTripRequest {}
+message CreateTripRequest {
+  int32 driverId = 1;
+  int32 invitedPassengerId = 2;
+}
 message CreateTripReply {
   int32 id = 1;
 }
@@ -23,9 +26,9 @@ message FollowTripRequest {
   int32 id = 1;
 }
 message FollowTripReply {
-  Trip trip = 1;
+  TripNetworkModel trip = 1;
 }
-message Trip {
+message TripNetworkModel {
   int32 id = 1;
   string message = 2;
 }
