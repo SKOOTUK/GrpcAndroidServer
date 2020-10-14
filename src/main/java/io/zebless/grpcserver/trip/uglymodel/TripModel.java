@@ -1,62 +1,44 @@
 package io.zebless.grpcserver.trip.uglymodel;
 
-import io.reactivex.Observable;
+import io.reactivex.Flowable;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.subjects.BehaviorSubject;
-import io.zelbess.tripupdates.TripNetworkModel;
+import io.zebless.grpcserver.trip.domain.Journey;
+import io.zebless.grpcserver.trip.domain.events.JourneyUpdateEvent;
+import io.zebless.grpcserver.trip.storage.JourneysDao;
+import io.zebless.grpcserver.trip.storage.UserDao;
+import io.zebless.grpcserver.trip.usecases.FollowJourneyUseCase;
+import io.zebless.grpcserver.trip.usecases.UpdateUserLocationUseCase;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
-import java.util.logging.Logger;
 
 public class TripModel {
-    private static final Logger logger = Logger.getLogger("TripModel");
-
-    public BehaviorSubject<TripNetworkModel> tripsHistory = BehaviorSubject.create();
 
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
-    public int createATrip() {
+    private UserDao userStorage = new UserDao();
+    private JourneysDao journeysStorage = new JourneysDao();
+
+    private UpdateUserLocationUseCase updateUserLocation = new UpdateUserLocationUseCase(userStorage);
+    private FollowJourneyUseCase followJourney = new FollowJourneyUseCase(userStorage, journeysStorage);
+
+
+    public int createATrip(int driverId, int invitedPassengerId) {
         int newTripId = new Random().nextInt(100);
-        startTripUpdates(newTripId);
+        Journey trip = new Journey(newTripId, driverId, invitedPassengerId);
+        journeysStorage.saveJourney(trip);
         return newTripId;
     }
 
+    public void updateUserLocation(int userId, double lat, double lon) {
+        updateUserLocation.update(userId, lat, lon);
+    }
+
+    public Flowable<JourneyUpdateEvent> followTrip(int tripId) {
+        return followJourney.followJourney(tripId);
+    }
+
+
     public void clear() {
         compositeDisposable.clear();
-    }
-
-
-    private void startTripUpdates(Integer requestId) {
-        List<Integer> times = new ArrayList<>();
-        for (int i = 0; i < 40; i++) {
-            times.add(i);
-        }
-
-        compositeDisposable.add(Observable.zip(
-                Observable.fromIterable(times),
-                Observable.interval(3, TimeUnit.SECONDS),
-                (integer, aLong) -> integer)
-                .map(integer ->
-                        TripNetworkModel.newBuilder()
-                                .setId(requestId)
-                                .setMessage(getMessage(integer))
-                                .build()
-                )
-                .doOnNext(trip -> {
-                    logger.info("Updating trip history:" + requestId);
-                    tripsHistory.onNext(trip);
-                })
-                .subscribe(trip -> {
-
-                }, throwable -> logger.severe(throwable.getMessage())));
-    }
-
-    private String getMessage(int updateNo) {
-        if (updateNo == 0) return "CREATED";
-        if (updateNo < 39) return "Update no: " + updateNo;
-        return "FINISHED";
     }
 }

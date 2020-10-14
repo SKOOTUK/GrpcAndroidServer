@@ -22,24 +22,8 @@ public class TripService extends TripServiceGrpc.TripServiceImplBase {
 
     @Override
     public void createTrip(CreateTripRequest request, StreamObserver<CreateTripReply> responseObserver) {
-        int newTripId = tripModel.createATrip();
+        int newTripId = tripModel.createATrip(request.getDriverId(), request.getInvitedPassengerId());
         responseObserver.onNext(CreateTripReply.newBuilder().setId(newTripId).build());
         responseObserver.onCompleted();
-    }
-
-    @Override
-    public void followTrip(FollowTripRequest request, StreamObserver<FollowTripReply> responseObserver) {
-        compositeDisposable.add(
-                tripModel.tripsHistory
-                        .filter(trip -> trip.getId() == request.getId())
-                        .subscribe(
-                                trip -> {
-                                    responseObserver.onNext(FollowTripReply.newBuilder().setTrip(trip).build());
-                                    if (trip.getMessage().equalsIgnoreCase("FINISHED")) responseObserver.onCompleted();
-                                },
-                                throwable -> {
-                                    logger.severe("Exception during follow trip:" + throwable.getMessage());
-                                })
-        );
     }
 }
